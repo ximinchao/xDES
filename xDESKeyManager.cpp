@@ -3,7 +3,7 @@
 #include <cstring>
 using std::memcpy;
 
-const unsigned int xDESKeyManager::m_pucPC1[XDES_KEYMANAGER_SIZE_TABLE_PC1] =
+const unsigned int xDESKeyManager::m_puiPC1[XDES_KEYMANAGER_SIZE_TABLE_PC1] =
 {
 	56, 48, 40, 32, 24, 16, 8, 0,
 	57, 49, 41, 33, 25, 17, 9, 1,
@@ -14,7 +14,7 @@ const unsigned int xDESKeyManager::m_pucPC1[XDES_KEYMANAGER_SIZE_TABLE_PC1] =
 	28, 20, 12, 4, 27, 19, 11, 3
 };
 
-const unsigned int xDESKeyManager::m_pucPC2[XDES_KEYMANAGER_SIZE_TABLE_PC2] = 
+const unsigned int xDESKeyManager::m_puiPC2[XDES_KEYMANAGER_SIZE_TABLE_PC2] = 
 {
 	13, 16, 10, 23, 0, 4, 3, 27,
 	14, 5, 20, 9, 22, 18, 11, 3,
@@ -37,13 +37,15 @@ bool xDESKeyManager::setKey(const unsigned char *const pucKey, const unsigned in
 {
 	bool bRtn = false;
 
+	unsigned int uiInnerLen = 0;
+
 	if (!pucKey || !uiKeyLen || (uiKeyLen != XDES_KEYMANAGER_SIZE_ORIGKEYBUFFER))
 	{
 		bRtn = false;
 		goto END;
 	}
 
-	if ((uiSetMode != XDES_KEYMANAGER_SETMODE_NORMAL) || (uiSetMode != XDES_KEYMANAGER_SETMODE_PRECALC))
+	if ((uiSetMode != XDES_KEYMANAGER_SETMODE_NORMAL) && (uiSetMode != XDES_KEYMANAGER_SETMODE_PRECALC))
 	{
 		bRtn = false;
 		goto END;
@@ -52,6 +54,13 @@ bool xDESKeyManager::setKey(const unsigned char *const pucKey, const unsigned in
 	if (uiSetMode == XDES_KEYMANAGER_SETMODE_NORMAL)
 	{
 		memcpy(m_pucOrigKeyBuffer, pucKey, uiKeyLen);
+		uiInnerLen = sizeof(m_pucInnerBuffer);
+
+		if(!calcPC(m_pucOrigKeyBuffer, sizeof(m_pucOrigKeyBuffer), 1, m_pucInnerBuffer, &uiInnerLen))
+		{
+			bRtn = false;
+			goto END;
+		}
 	}
 	else if (uiSetMode == XDES_KEYMANAGER_SETMODE_PRECALC)
 	{
@@ -76,14 +85,14 @@ bool xDESKeyManager::setBit(const unsigned char *const pucInChar, const unsigned
 		goto END;
 	}
 
-	ucInResult = (*pucInChar) & (0x1 << uiInBitPos);
+	ucInResult = (*pucInChar) & (0x80 >> uiInBitPos);
 	if (ucInResult)
 	{
-		(*pucOutChar) |= (0x1 << uiOutBitPos);
+		(*pucOutChar) |= (0x80 >> uiOutBitPos);
 	}
 	else
 	{
-		(*pucOutChar) &= (~(0x1 << uiOutBitPos));
+		(*pucOutChar) &= (~(0x80 >> uiOutBitPos));
 	}
 
 	bRtn = true;
@@ -141,7 +150,7 @@ bool xDESKeyManager::calcPC(const unsigned char *const pucInKey, const unsigned 
 		goto END;
 	}
 
-	if ((uiType != 1) || (uiType != 2))
+	if ((uiType != 1) && (uiType != 2))
 	{
 		bRtn = false;
 		goto END;
@@ -161,11 +170,11 @@ bool xDESKeyManager::calcPC(const unsigned char *const pucInKey, const unsigned 
 
 	if (uiType == 1)
 	{
-		exchangeBytes(pucInKey, uiInKeyLen, pucOutKey, puiOutKeyLen, m_pucPC1, sizeof(m_pucPC1)); 
+		bRtn = exchangeBytes(pucInKey, uiInKeyLen, pucOutKey, puiOutKeyLen, m_puiPC1, sizeof(m_puiPC1)/sizeof(m_puiPC1[0])); 
 	}
 	else if (uiType == 2)
 	{
-		exchangeBytes(pucInKey, uiInKeyLen, pucOutKey, puiOutKeyLen, m_pucPC2, sizeof(m_pucPC2));
+		bRtn = exchangeBytes(pucInKey, uiInKeyLen, pucOutKey, puiOutKeyLen, m_puiPC2, sizeof(m_puiPC2)/sizeof(m_puiPC2[0]));
 	}
 END:
 	return bRtn;

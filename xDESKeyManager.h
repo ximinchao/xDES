@@ -23,10 +23,10 @@ public:
 	xDESKeyManager();
 	~xDESKeyManager();
 	bool setKey(const unsigned char *const pucKey, const unsigned int uiKeyLen, const unsigned int uiSetMode);
-	bool calcPC(const unsigned char *const pucInKey, const unsigned int uiInKeyLen, const unsigned int uiType, unsigned char *const pucOutKey, unsigned int *const puiOutKeyLen);
 	bool calcNextKey(unsigned char *const pucOutKey, unsigned int *const puiOutKeyLen);
 	bool getKeyRound(unsigned int *const puiKeyRount);
 private:
+	bool calcPC(const unsigned char *const pucInKey, const unsigned int uiInKeyLen, const unsigned int uiType, unsigned char *const pucOutKey, unsigned int *const puiOutKeyLen);
 	bool setBit(const unsigned char *const pucInChar, const unsigned int uiInBitPos, unsigned char *const pucOutChar, const unsigned int uiOutBitPos);
 	bool exchangeBytes(const unsigned char *const pucInData, const unsigned int uiInDataLen, unsigned char *const pucOutData, unsigned int *const puiOutDataLen, const unsigned int *const pucExchangeTable, const unsigned int uiExchangeTableLen);
 	unsigned char m_pucOrigKeyBuffer[XDES_KEYMANAGER_SIZE_ORIGKEYBUFFER];
@@ -36,8 +36,8 @@ private:
 	unsigned char m_uiSetMode;
 	unsigned char m_uiCalcRound;
 
-	static const unsigned int m_pucPC1[XDES_KEYMANAGER_SIZE_TABLE_PC1];
-	static const unsigned int m_pucPC2[XDES_KEYMANAGER_SIZE_TABLE_PC2];
+	static const unsigned int m_puiPC1[XDES_KEYMANAGER_SIZE_TABLE_PC1];
+	static const unsigned int m_puiPC2[XDES_KEYMANAGER_SIZE_TABLE_PC2];
 };
 
 #endif
