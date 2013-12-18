@@ -6,3 +6,7 @@ xDESTest.o: xDESTest.cpp
 
 xDESKeyManager.o: xDESKeyManager.cpp xDESKeyManager.h
 	g++ -g -c xDESKeyManager.cpp
+
+.PHONY: clean
+clean:
+	-rm -f xDESTest.o xDESKeyManager.o xDESTest

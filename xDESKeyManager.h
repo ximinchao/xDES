@@ -24,6 +24,7 @@ public:
 	~xDESKeyManager();
 	bool setKey(const unsigned char *const pucKey, const unsigned int uiKeyLen, const unsigned int uiSetMode);
 	bool calcNextKey(unsigned char *const pucOutKey, unsigned int *const puiOutKeyLen);
+	bool getCurKey(unsigned char *const pucOutKey, unsigned int *const puiOutKeyLen);
 	bool getKeyRound(unsigned int *const puiKeyRount);
 private:
 	bool calcPC(const unsigned char *const pucInKey, const unsigned int uiInKeyLen, const unsigned int uiType, unsigned char *const pucOutKey, unsigned int *const puiOutKeyLen);

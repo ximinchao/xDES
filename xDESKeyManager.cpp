@@ -27,6 +27,7 @@ const unsigned int xDESKeyManager::m_puiPC2[XDES_KEYMANAGER_SIZE_TABLE_PC2] =
 xDESKeyManager::xDESKeyManager()
 {
 	m_uiSetMode = XDES_KEYMANAGER_SETMODE_UNSET;
+	m_uiCalcRound = 0;
 }
 
 xDESKeyManager::~xDESKeyManager()
@@ -37,7 +38,7 @@ bool xDESKeyManager::setKey(const unsigned char *const pucKey, const unsigned in
 {
 	bool bRtn = false;
 
-	unsigned int uiInnerLen = 0;
+	unsigned int uiInnerLen = 0, i = 0;
 
 	if (!pucKey || !uiKeyLen || (uiKeyLen != XDES_KEYMANAGER_SIZE_ORIGKEYBUFFER))
 	{
@@ -61,11 +62,38 @@ bool xDESKeyManager::setKey(const unsigned char *const pucKey, const unsigned in
 			bRtn = false;
 			goto END;
 		}
+
+		m_uiCalcRound = 0;
 	}
 	else if (uiSetMode == XDES_KEYMANAGER_SETMODE_PRECALC)
 	{
 		//todo
 		memcpy(m_pucOrigKeyBuffer, pucKey, uiKeyLen);
+		uiInnerLen = sizeof(m_pucInnerBuffer);
+		if(!calcPC(m_pucOrigKeyBuffer, sizeof(m_pucOrigKeyBuffer), 1, m_pucInnerBuffer, &uiInnerLen))
+		{
+			bRtn = false;
+			goto END;
+		}
+
+		for(i=0; i<XDES_KEYMANAGER_COUNT_ROUND; i++)
+		{
+			uiInnerLen = sizeof(m_pucInnerBuffer);
+			if(!calcNextKey(m_pucInnerBuffer, &uiInnerLen))
+			{
+				bRtn = false;
+				goto END;
+			}
+			
+			uiInnerLen = sizeof(m_pucOutAllKeyBuffer[i]);
+			if(!calcPC(m_pucInnerBuffer, sizeof(m_pucInnerBuffer), 2, m_pucOutAllKeyBuffer[i], &uiInnerLen))
+			{
+				bRtn = false;
+				goto END;
+			}
+		}
+		
+		m_uiCalcRound = i;
 	}
 
 	m_uiSetMode = uiSetMode;
@@ -184,6 +212,35 @@ bool xDESKeyManager::calcNextKey(unsigned char *const pucOutKey, unsigned int *c
 {
 	bool bRtn = false;
 
+	if(!pucOutKey || !puiOutKeyLen || (*puiOutKeyLen) < XDES_KEYMANAGER_SIZE_OUTKEYBUFFER || m_uiCalcRound > XDES_KEYMANAGER_COUNT_ROUND)
+	{
+		bRtn = false;
+		goto END;
+	}
+
+	//do sth
+	memset(m_pucOutKeyBuffer, 0, sizeof(m_pucOutKeyBuffer));
+
+	m_uiCalcRound++;
+	memcpy(pucOutKey, m_pucOutKeyBuffer, XDES_KEYMANAGER_SIZE_OUTKEYBUFFER);
+	*puiOutKeyLen = XDES_KEYMANAGER_SIZE_OUTKEYBUFFER;
+	bRtn = true;
+END:
+	return bRtn;
+}
+
+bool xDESKeyManager::getCurKey(unsigned char *const pucOutKey, unsigned int *const puiOutKeyLen)
+{
+	bool bRtn = false;
+
+	if(!pucOutKey || !puiOutKeyLen || (*puiOutKeyLen) < XDES_KEYMANAGER_SIZE_OUTKEYBUFFER || m_uiCalcRound < 1 || m_uiCalcRound > XDES_KEYMANAGER_COUNT_ROUND)
+	{
+		bRtn = false;
+		goto END;
+	}
+
+	memcpy(pucOutKey, m_pucOutKeyBuffer, XDES_KEYMANAGER_SIZE_OUTKEYBUFFER);
+	*puiOutKeyLen = XDES_KEYMANAGER_SIZE_OUTKEYBUFFER;
 	bRtn = true;
 END:
 	return bRtn;
